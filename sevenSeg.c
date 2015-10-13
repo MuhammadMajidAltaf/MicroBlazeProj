@@ -1,8 +1,9 @@
 
 
-/***************************** include Files *******************************/
+/***************************** Include Files *******************************/
 #include "sevenSeg.h"
-
+#include "xparameters.h"
+#include "xil_io.h"
 /************************** Function Definitions ***************************/
 unsigned int numPosition[] = {  // Position
     0xFE << 7, 0xFD << 7, 0xFB << 7, 0xF7 << 7,
@@ -10,14 +11,10 @@ unsigned int numPosition[] = {  // Position
 };
 
 unsigned int numPattern[] = { // Character
-    0x40, 0x79 /*0xB0, 0x99, 0x92, 0x82, 0xF8,
-    0x80, 0x90, 0x88, 0x83, 0xC6, 0xA1, 0x86, 0x8E*/
-};
+    0x40, 0x79, 0x24, 0x30, 0x19, 0x12, 0x02, 0x78, 0x00, 0x10 };
 
-void displayNumbers(unsigned int integerPart, unsigned int decimalPart){
+void displayNumbers(unsigned int pos, unsigned int integerPart, unsigned int decimalPart){
     unsigned char digits[8];
-    unsigned int i;
-
 
     digits[0] = decimalPart % 10;
     digits[1] = (decimalPart / 10) % 10;
@@ -29,9 +26,6 @@ void displayNumbers(unsigned int integerPart, unsigned int decimalPart){
     digits[6] = (integerPart / 100) % 10;
     digits[7] = (integerPart / 1000) % 10;
 
-    for(i=0; i<8; i++){
-        SEVENSEG_mWriteReg(XPAR_SEVENSEG_0_S00_AXI_BASEADDR, 0, numPosition[i] | numPattern[ digit[i] ]);
-    }
 
-   
+    SEVENSEG_mWriteReg(XPAR_SEVENSEG_0_S00_AXI_BASEADDR, 0, numPosition[pos] | numPattern[ digits[pos] ]);
 }
