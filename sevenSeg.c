@@ -29,3 +29,26 @@ void displayNumbers(unsigned int pos, unsigned int integerPart, unsigned int dec
 
     SEVENSEG_mWriteReg(XPAR_SEVENSEG_0_S00_AXI_BASEADDR, 0, numPosition[pos] | numPattern[ digits[pos] ]);
 }
+
+
+void displayInTimeFormat(unsigned int pos, unsigned int integerPart, unsigned int decimalPart){
+    unsigned int minN, secN;
+    unsigned char digits[8];
+
+    minN = integerPart / 60;
+    secN = integerPart % 60;
+
+
+    digits[0] = decimalPart % 10;
+    digits[1] = (decimalPart / 10) % 10;
+    digits[2] = (decimalPart / 100) % 10;
+    digits[3] = (decimalPart / 1000) % 10;
+
+    digits[4] = secN % 10;
+    digits[5] = (secN / 10) % 10;
+    digits[6] = minN % 10;
+    digits[7] = (minN / 1000) % 10;
+
+
+    SEVENSEG_mWriteReg(XPAR_SEVENSEG_0_S00_AXI_BASEADDR, 0, numPosition[pos] | numPattern[ digits[pos] ]);
+}
