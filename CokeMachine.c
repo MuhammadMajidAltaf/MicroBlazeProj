@@ -1,17 +1,17 @@
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 
-enum CMSignals{
-    Q,
-    PAID,
+enum CMSignals {
+    NOSIG, Q, PAID,
     CB, CD, CS,
     TAKE_BOTTLE
 };
 
-enum CMStates{
-    GATHER_CASH, DISPENSE_PRODUCT,
-    STUCK, IDLE
+enum CMStates {
+    IDLE, GATHER_CASH,
+    DISPENSE_PRODUCT
 };
 
 typedef struct CokeMachine{
@@ -23,87 +23,98 @@ typedef struct EventTag {
     uint16_t sig;
 } Event;
 
-void CM_constructor (CokeMachine *cm, uint8_t defuse);
 
-void CM_init (Cokemachine *cm);
+#define TRAN(target_) (cm->state = (uint8_t)(target_))
 
-void CM_dispatch (CokeMachine *cm, Event const *e);
 
-static Cokemachine cm;
+void CM_constructor(CokeMachine *cm){
+    cm->currBal = 0;
+}
 
-void CM_dipatch (CokeMachine *cm, ){
+void CM_init(CokeMachine *cm){
+    TRAN(IDLE);
+}
+
+void CM_dispatch (CokeMachine *cm, Event const *e){
     switch (cm->state){
-        case GATHER_CASH: 
+        case IDLE:
+            if (e->sig == Q){
+                    cm->currBal += 25;
+                    TRAN(GATHER_CASH);
+            }
+            break;
+
+        case GATHER_CASH:
             switch (e->sig){
                 case Q:
-                    cm->currentBal += 25;
+                    cm->currBal += 25;
                     break;
-                case PAID：
-                    cm->state = DISPENSE_PRODUCT;
+                case PAID:
+                    TRAN(DISPENSE_PRODUCT);
                     break;
             }
             break;
-        case DISPENSE_PRODUCT: 
+        case DISPENSE_PRODUCT:
             switch (e->sig){
                 case CB:
+                    printf("Coke Dispensed\n");
+                    break;
                 case CD:
+                    printf("Diet Coke Dispensed\n");
+                    break;
                 case CS:
-                    
+                    printf("Sprite Dispensed\n");
+                    break;
                 case TAKE_BOTTLE:
-                    cm->state = IDLE;
+                    TRAN(IDLE);
+                    cm->currBal = 0;
                     break;
             }
+            break;
         }
-        }
-    }
-    
 }
 
-void CM_constructor(Bomb1 *me, uint8_t defuse) {
-    me->defuse = defuse; }
-
-void CM_init(Bomb1 *me) {
-    me->timeout = INIT_TIMEOUT;
-    TRAN(SETTING_STATE);
-}
-
-static Bomb1 l_bomb;
+static CokeMachine cm;
 
 int main() {
-    Bomb1_constructor(&l_bomb, 0x0D);
-    for (;;) { 
-        static TickEvt tick_evt = { TICK_SIG, 0};
+    CM_constructor(&cm);
+    CM_init(&cm);
+    uint8_t sigin;
 
-        usleep(100000);
-        if (++tick_evt.fine_time == 10) {
-            tick_evt.fine_time = 0;
+    for (;;) {
+        char s[20];
+        static Event event = {NOSIG};
+
+        printf("Please input a signal: ");
+        scanf("%s", s);
+        sigin = (!strcmp(s,"Q") << 4) | (!strcmp(s, "TAKE_BOTTLE") << 3)\
+         | (!strcmp(s, "CB") << 2) | (!strcmp(s, "CD") << 1) \
+         | !strcmp(s, "CS");
+
+        printf("%x\n", sigin);
+        switch (sigin){
+            case 0x10:
+                event.sig = Q;
+                break;
+            case 0x8:
+                event.sig = TAKE_BOTTLE;
+                break;
+            case 0x4:
+                event.sig = CB;
+                break;
+            case 0x2:
+                event.sig = CD;
+                break;
+            case 0x1:
+                event.sig = CS;
+                break;
+            default:
+                if (cm.state == GATHER_CASH && cm.currBal == 50)
+                    event.sig = PAID;
+                break;
         }
-
-        Bomb1_dispatch(&l_bomb, (Event*)&tick_evt);
-        if (kbhit())
-            Bomb1_dispatch(&l_bomb, e);
+    printf("%d\n", event.sig);
+    
+    CM_dispatch(&cm, &event);
     }
 }
-
-void CM_dispatch(Bomb1 *me, Event const *e) {
-    switch (me->state) {
-        case SETTING_STATE: {
-            switch (e->sig) {
-                case UP_SIG: {
-                    if (me->timeout < 60)
-                        display(++me->timeout);
-                    break;
-                }
-                case DOWN_SIG: {
-                    if (me->timeout > 1)
-                        display(--me->timeout);
-                    break;
-                }
-                case ARM_SIG: {
-                    me->code = 0;
-                    TRAN(TIMING_STATE);           
-                    break;
-                }
-             }
-             break;
-        } /* end case SETTING_STATE */
